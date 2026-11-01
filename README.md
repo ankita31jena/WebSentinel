@@ -56,7 +56,3 @@ python3 app.py
 | Scans | /scans | Scan history |
 | API | /api/risk-summary | JSON risk summary |
 
-## Intern
-**Padmanathan** | MCA | Rajiv Gandhi College of Engineering and Technology  
-Cybersecurity Intern — skillogic, Chennai  
-padmanathan948@gmail.com
