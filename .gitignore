@@ -1,0 +1,10 @@
+venv/
+__pycahe__/
+*.pyc
+.env
+*.log
+reports/
+logs/
+~/.ZAP/
+*.db
+.DS_Store

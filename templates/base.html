@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZAP Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+    .sidebar { width: 240px; min-height: 100vh; background: #1e293b; position: fixed; top: 0; left: 0; padding: 0; z-index: 100; }
+    .sidebar-brand { background: #1F5C99; padding: 20px; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+    .sidebar-brand span { color: #93c5fd; }
+    .sidebar .nav-link { color: #94a3b8; padding: 12px 20px; border-radius: 0; transition: all 0.2s; font-size: 14px; }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #1F5C99; color: #fff; }
+    .sidebar .nav-link i { margin-right: 10px; font-size: 16px; }
+    .main-content { margin-left: 240px; padding: 30px; }
+    .topbar { background: #1e293b; border-bottom: 1px solid #334155; padding: 15px 30px; margin-left: 240px; position: sticky; top: 0; z-index: 99; }
+    .card-stat { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; }
+    .card-stat .number { font-size: 36px; font-weight: 700; }
+    .badge-high   { background: #dc2626; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+    .badge-medium { background: #d97706; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+    .badge-low    { background: #16a34a; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+    .badge-info   { background: #1F5C99; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+    .table-dark-custom { background: #1e293b; }
+    .table-dark-custom th { background: #1F5C99; color: #fff; border: none; }
+    .table-dark-custom td { border-color: #334155; color: #cbd5e1; font-size: 13px; }
+    .table-dark-custom tr:hover td { background: #263548; }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">⚡ ZAP <span>Dashboard</span></div>
+    <nav class="nav flex-column mt-2">
+      <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/"><i class="bi bi-speedometer2"></i>Dashboard</a>
+      <a class="nav-link {% if request.path == '/alerts' %}active{% endif %}" href="/alerts"><i class="bi bi-shield-exclamation"></i>Alerts</a>
+      <a class="nav-link {% if request.path == '/scans' %}active{% endif %}" href="/scans"><i class="bi bi-radar"></i>Scans</a>
+      <a class="nav-link {% if request.path == '/summary' %}active{% endif %}" href="/summary"><i class="bi bi-bar-chart-line"></i>Summary</a>
+      <a class="nav-link" href="/api/risk-summary" target="_blank"><i class="bi bi-braces"></i>API</a>
+    </nav>
+  </div>
+
+  <!-- Topbar -->
+  <div class="topbar d-flex align-items-center justify-content-between">
+    <span class="fw-semibold text-light">OWASP ZAP — Vulnerability Detection Dashboard</span>
+    <span class="text-secondary small">&nbsp; Padmanathan</span>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/chart.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

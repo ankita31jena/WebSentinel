@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">📊 Scan Dashboard</h4>
+  <div class="d-flex gap-2">
+    <button class="btn btn-sm btn-warning fw-semibold" onclick="triggerScan()">
+      ⚡ Run New Scan
+    </button>
+    <a href="/report/download" class="btn btn-sm btn-success fw-semibold">
+      ⬇ Download Report
+    </a>
+  </div>
+</div>
+
+<!-- Scan Progress Bar (hidden by default) -->
+<div id="scanProgress" class="mb-4" style="display:none">
+  <div class="card-stat">
+    <div class="d-flex justify-content-between mb-2">
+      <span class="text-light fw-semibold" id="scanMsg">Running scan...</span>
+      <span class="text-secondary" id="scanPct">0%</span>
+    </div>
+    <div class="progress" style="height:8px;background:#334155">
+      <div class="progress-bar bg-warning" id="scanBar" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card-stat text-center">
+      <div class="number text-danger">{{ risk_summary.get('High', 0) }}</div>
+      <div class="text-secondary mt-1">High Risk</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card-stat text-center">
+      <div class="number text-warning">{{ risk_summary.get('Medium', 0) }}</div>
+      <div class="text-secondary mt-1">Medium Risk</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card-stat text-center">
+      <div class="number text-success">{{ risk_summary.get('Low', 0) }}</div>
+      <div class="text-secondary mt-1">Low Risk</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card-stat text-center">
+      <div class="number text-info">{{ total_alerts }}</div>
+      <div class="text-secondary mt-1">Total Alerts</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card-stat h-100">
+      <h6 class="fw-semibold mb-3 text-light">Risk Distribution</h6>
+      <canvas id="riskChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card-stat h-100">
+      <h6 class="fw-semibold mb-3 text-light">Top 10 Vulnerabilities</h6>
+      <canvas id="barChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Scans -->
+<div class="card-stat">
+  <h6 class="fw-semibold mb-3 text-light">Recent Scans</h6>
+  <table class="table table-dark-custom table-hover mb-0">
+    <thead><tr><th>Scan ID</th><th>Target</th><th>URLs</th><th>Timestamp</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for s in scans %}
+      <tr>
+        <td><code>{{ s.scan_id }}</code></td>
+        <td>{{ s.target }}</td>
+        <td>{{ s.urls_found }}</td>
+        <td>{{ s.timestamp }}</td>
+        <td><span class="badge bg-success">{{ s.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Doughnut chart
+new Chart(document.getElementById('riskChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['High','Medium','Low','Informational'],
+    datasets: [{
+      data: [
+        {{ risk_summary.get('High', 0) }},
+        {{ risk_summary.get('Medium', 0) }},
+        {{ risk_summary.get('Low', 0) }},
+        {{ risk_summary.get('Informational', 0) }}
+      ],
+      backgroundColor: ['#dc2626','#d97706','#16a34a','#1F5C99'],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+    cutout: '65%'
+  }
+});
+
+// Bar chart
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: [{% for a in top_alerts %}"{{ a._id[:30] }}"{% if not loop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Occurrences',
+      data: [{% for a in top_alerts %}{{ a.count }}{% if not loop.last %},{% endif %}{% endfor %}],
+      backgroundColor: [{% for a in top_alerts %}
+        "{% if a.risk == 'High' %}#dc2626{% elif a.risk == 'Medium' %}#d97706{% elif a.risk == 'Low' %}#16a34a{% else %}#1F5C99{% endif %}"
+        {% if not loop.last %},{% endif %}{% endfor %}],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+      y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } }
+    }
+  }
+});
+
+// Scan trigger
+function triggerScan() {
+  if (!confirm("Run a new ZAP scan on DVWA? This takes 10-20 minutes.")) return;
+  document.getElementById('scanProgress').style.display = 'block';
+  fetch('/scan/trigger', { method: 'POST' });
+  const interval = setInterval(() => {
+    fetch('/scan/status').then(r => r.json()).then(d => {
+      document.getElementById('scanMsg').textContent = d.message;
+      document.getElementById('scanPct').textContent = d.progress + '%';
+      document.getElementById('scanBar').style.width = d.progress + '%';
+      if (!d.running && d.progress === 100) {
+        clearInterval(interval);
+        setTimeout(() => location.reload(), 2000);
+      }
+    });
+  }, 3000);
+}
+</script>
+{% endblock %}
